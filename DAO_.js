@@ -96,7 +96,7 @@ describe('DAO', () => {
     describe('Success', () => {
 
       beforeEach(async () => {
-        transaction = await dao.connect(investor1).createProposal('Proposal 1', ether(100), recipient.address, 'test')
+        transaction = await dao.connect(investor1).createProposal('Proposal 1', tokens(100), recipient.address, 'test')
         result = await transaction.wait()
       })
 
@@ -108,7 +108,7 @@ describe('DAO', () => {
         const proposal = await dao.proposals(1)
 
         expect(proposal.id).to.equal(1)
-        expect(proposal.amount).to.equal(ether(100))
+        expect(proposal.amount).to.equal(tokens(100))
         expect(proposal.recipient).to.equal(recipient.address)
       })
 
@@ -121,7 +121,7 @@ describe('DAO', () => {
 
     describe('Failure', () => {
       it('rejects invalid amount', async () => {
-        await expect(dao.connect(investor1).createProposal('Proposal 1', ether(1000), recipient.address,'test')).to.be.reverted
+        await expect(dao.connect(investor1).createProposal('Proposal 1', tokens(1000000000), recipient.address,'test')).to.be.reverted
       })
 
 
@@ -214,7 +214,7 @@ describe('DAO', () => {
       })
 
       it('transfers funds to recipient', async () => {
-        expect(await ethers.provider.getBalance(recipient.address)).to.equal(tokens(10100))
+        expect(await token.balanceOf(recipient.address)).to.equal(tokens(100))
       })
 
       it('it updates the proposal to finalized', async () => {

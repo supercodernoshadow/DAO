@@ -62,7 +62,7 @@ contract DAO {
         address payable _recipient,
         string memory _description
     ) external onlyInvestor {
-        require(address(this).balance >= _amount);
+        require(token.balanceOf(address(this)) >= _amount);
         require((bytes(_description)).length != 0);
 
         proposalCount++;
@@ -123,10 +123,10 @@ contract DAO {
         require(proposal.votes >= int256(quorum), "must reach quorum to finalize proposal");
 
         // Check that the contract has enough ether
-        require(address(this).balance >= proposal.amount);
+        require(token.balanceOf(address(this)) >= proposal.amount);
 
         // Transfer the funds to recipient
-        (bool sent, ) = proposal.recipient.call{value: proposal.amount}("");
+        bool sent = token.transfer(proposal.recipient, proposal.amount);
         require(sent);
 
         // Emit event
