@@ -34,8 +34,8 @@ async function main() {
   const token = await ethers.getContractAt('Token', config[chainId].token.address)
   console.log(`Token fetched: ${token.address}\n`)
 
-  // Send tokens to investors - each one gets 20%
-  transaction = await token.transfer(investor1.address, tokens(200000))
+  // Send tokens to investors - each one gets 10%
+  transaction = await token.transfer(investor1.address, tokens(1200000))
   await transaction.wait()
 
   transaction = await token.transfer(investor2.address, tokens(200000))
@@ -54,6 +54,13 @@ async function main() {
   transaction = await funder.sendTransaction({ to: dao.address, value: ether(1000) }) // 1,000 Ether
   await transaction.wait()
   console.log(`Sent funds to dao treasury...\n`)
+
+  // Send remaining tokens to the DAO
+  transaction = await token.connect(investor1).approve(dao.address,tokens(1000000))
+  await transaction.wait()
+
+  transaction = await dao.receiveTokens(tokens(1000000), investor1.address)
+  await transaction.wait()
 
   for (var i = 0; i < 3; i++) {
       // Create Proposal

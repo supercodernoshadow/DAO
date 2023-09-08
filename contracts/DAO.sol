@@ -14,7 +14,7 @@ contract DAO {
         string name;
         uint256 amount;
         address payable recipient;
-        uint256 votes;
+        int256 votes;
         bool finalized;
     }
 
@@ -41,6 +41,11 @@ contract DAO {
     // Allow contract to receive ether
     receive() external payable {}
 
+    // Allow contract to receive tokens
+    function receiveTokens(uint256 amount, address from) external {
+        token.transferFrom(from, address(this), amount);
+    }
+
     modifier onlyInvestor() {
         require(
             token.balanceOf(msg.sender) > 0,
@@ -49,13 +54,16 @@ contract DAO {
         _;
     }
 
+
     // Create proposal
     function createProposal(
         string memory _name,
         uint256 _amount,
-        address payable _recipient
+        address payable _recipient,
+        string memory _description
     ) external onlyInvestor {
         require(address(this).balance >= _amount);
+        require((bytes(_description)).length != 0);
 
         proposalCount++;
 
@@ -77,7 +85,7 @@ contract DAO {
     }
 
     // Vote on proposal
-    function vote(uint256 _id) external onlyInvestor {
+    function vote(uint256 _id, bool aye) external onlyInvestor {
         // Fetch proposal from mapping by id
         Proposal storage proposal = proposals[_id];
 
@@ -85,7 +93,13 @@ contract DAO {
         require(!votes[msg.sender][_id], "already voted");
 
         // update votes
-        proposal.votes += token.balanceOf(msg.sender);
+        if(aye){
+            proposal.votes += int256(token.balanceOf(msg.sender));
+        }
+        else{
+            proposal.votes -= int256(token.balanceOf(msg.sender));
+
+        }
 
         // Track that user has voted
         votes[msg.sender][_id] = true;
@@ -106,7 +120,7 @@ contract DAO {
         proposal.finalized = true;
 
         // Check that proposal has enough votes
-        require(proposal.votes >= quorum, "must reach quorum to finalize proposal");
+        require(proposal.votes >= int256(quorum), "must reach quorum to finalize proposal");
 
         // Check that the contract has enough ether
         require(address(this).balance >= proposal.amount);
